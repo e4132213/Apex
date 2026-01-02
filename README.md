@@ -69,3 +69,11 @@ Media: this directory should contain short (20-30 seconds) full-resolution movie
 
 problems + solutions:
 when programming the variables for the Catering class "FoodItems", the ERD diagram provided says to make the UnitPrice a float data type. However, I have made it a decimal data type because this data type is designed for use with currency and avoids potential subtle rounding errors that may occur with the float data type.
+
+Issues occurred with the original copy so ive had to recreate the project. 
+I've created the Data folder,
+created the Menu, FoodItem, MenuFoodItem, FoodBooking, and CateringDbContext classes,
+ive programmed them all (at least partially),
+ive created the initial migration and updated it with the seed data programmed,
+created a README document,
+ran Build > Rebuild the solution to make sure their were no problems
