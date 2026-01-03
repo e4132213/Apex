@@ -7,6 +7,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register the CateringDbContext with the dependency injection container
+builder.Services.AddDbContext<Apex.Catering.Data.CateringDbContext>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
