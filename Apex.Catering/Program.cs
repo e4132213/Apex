@@ -15,6 +15,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    AddData(app);
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -26,3 +27,14 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+void AddData(IHost app)
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<Apex.Catering.Data.CateringDbContext>();
+        var dbInitializer = new Apex.Catering.Data.DbDataInitializer(context);
+        dbInitializer.InitializeData();
+    }
+}
