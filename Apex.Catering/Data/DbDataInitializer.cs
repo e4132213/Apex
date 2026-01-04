@@ -13,8 +13,9 @@
         {
             // Ensure database is created
             _context.Database.EnsureCreated();
-            // Check if there are any FoodItems already present
-            if (_context.FoodItems.Any())
+
+            // Check if data already exist
+            if (_context.Database.EnsureCreated())
             {
                 return; // Data already initialized
             }
