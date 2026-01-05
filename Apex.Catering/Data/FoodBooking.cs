@@ -22,6 +22,6 @@ namespace Apex.Catering.Data
 
         // Identifier of the selected menu for this booking.
         public int MenuId { get; set; }
-        public required Menu Menus { get; set; }
+        public Menu Menus { get; set; } = null!;
     }
 }
