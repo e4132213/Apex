@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Apex.Catering.Data;
@@ -38,6 +39,28 @@ namespace Apex.Catering.Controllers
 
             if (booking is null) return NotFound();
             return Ok(booking);
+        }
+
+        // GET: api/FoodBookings/5/fooditems
+        // Returns the list of FoodItems associated with the Menu referenced by the booking.
+        [HttpGet("{id:int}/fooditems")]
+        public async Task<ActionResult<IEnumerable<FoodItem>>> GetFoodItems(int id)
+        {
+            var booking = await _context.FoodBookings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(fb => fb.FoodBookingId == id);
+
+            if (booking is null) return NotFound();
+
+            var items = await _context.MenuFoodItems
+                .AsNoTracking()
+                .Where(mfi => mfi.MenuId == booking.MenuId)
+                .Include(mfi => mfi.FoodItems)
+                .Select(mfi => mfi.FoodItems)
+                .Distinct()
+                .ToListAsync();
+
+            return Ok(items);
         }
 
         // POST: api/FoodBookings
