@@ -11,47 +11,48 @@
 
         public void InitializeData()
         {
-            // Ensure database is created
-            _context.Database.EnsureCreated();
+            // Ensure database and schema exist. EnsureCreated returns true when the DB/schema was created.
+            var created = _context.Database.EnsureCreated();
 
-            // Check if data already exist
-            if (_context.Database.EnsureCreated())
+            // If the database already existed, don't re-seed.
+            if (!created)
             {
-                return; // Data already initialized
+                return;
             }
+
             // Seed initial FoodItems
             var foodItems = new List<FoodItem>
             {
-                new FoodItem { FoodItemId = 00,  Description = "Chicken Sandwich", UnitPrice = 5.99m },
-                new FoodItem { FoodItemId = 01,  Description = "Veggie Wrap", UnitPrice = 4.99m },
-                new FoodItem { FoodItemId = 02,  Description = "Caesar Salad", UnitPrice = 6.49m }
+                new FoodItem { FoodItemId = 0,  Description = "Chicken Sandwich", UnitPrice = 5.99m },
+                new FoodItem { FoodItemId = 1,  Description = "Veggie Wrap", UnitPrice = 4.99m },
+                new FoodItem { FoodItemId = 2,  Description = "Caesar Salad", UnitPrice = 6.49m }
             };
             _context.FoodItems.AddRange(foodItems);
             _context.SaveChanges();
 
             var menus = new List<Menu>
             {
-                new Menu { MenuId = 00, MenuName = "Standard Menu" },
-                new Menu { MenuId = 01, MenuName = "Vegetarian Menu" }
+                new Menu { MenuId = 0, MenuName = "Standard Menu" },
+                new Menu { MenuId = 1, MenuName = "Vegetarian Menu" }
             };
             _context.Menus.AddRange(menus);
             _context.SaveChanges();
 
             var menuFoodItems = new List<MenuFoodItem>
             {
-                new MenuFoodItem { MenuId = 00, FoodItemId = 00 },
-                new MenuFoodItem { MenuId = 00, FoodItemId = 01 },
-                new MenuFoodItem { MenuId = 00, FoodItemId = 02 },
-                new MenuFoodItem { MenuId = 01, FoodItemId = 01 },
-                new MenuFoodItem { MenuId = 01, FoodItemId = 02 }
+                new MenuFoodItem { MenuId = 0, FoodItemId = 0 },
+                new MenuFoodItem { MenuId = 0, FoodItemId = 1 },
+                new MenuFoodItem { MenuId = 0, FoodItemId = 2 },
+                new MenuFoodItem { MenuId = 1, FoodItemId = 1 },
+                new MenuFoodItem { MenuId = 1, FoodItemId = 2 }
             };
             _context.MenuFoodItems.AddRange(menuFoodItems);
             _context.SaveChanges();
 
             var bookings = new List<FoodBooking>
             {
-                new FoodBooking { FoodBookingId = 00, MenuId = 00, NumberOfGuests = 10 },
-                new FoodBooking { FoodBookingId = 01, MenuId = 01, NumberOfGuests = 05 }
+                new FoodBooking { FoodBookingId = 0, MenuId = 0, NumberOfGuests = 10 },
+                new FoodBooking { FoodBookingId = 1, MenuId = 1, NumberOfGuests = 5 }
             };
             _context.FoodBookings.AddRange(bookings);
             _context.SaveChanges();

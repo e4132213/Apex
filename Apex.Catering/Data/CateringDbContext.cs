@@ -1,6 +1,5 @@
 ﻿// EF Core core APIs: DbContext, DbSet, DbContextOptions, ModelBuilder, etc.
 using Microsoft.EntityFrameworkCore;
-// types for dependency resolution (kept as in original file)
 using Microsoft.Extensions.DependencyModel.Resolution;
 
 // Declares the namespace for the classes in this file
@@ -11,7 +10,16 @@ namespace Apex.Catering.Data
     public class CateringDbContext : DbContext
     {
         // Constructor used when dependency injection provides DbContextOptions (typical in ASP.NET Core)
-        public CateringDbContext(DbContextOptions<CateringDbContext> options) : base(options) { }
+        public CateringDbContext(DbContextOptions<CateringDbContext> options) : base(options)
+        {
+            // Ensure DbPath is initialized when EF creates the context through DI
+            if (string.IsNullOrEmpty(DbPath))
+            {
+                var folder = Environment.SpecialFolder.LocalApplicationData;
+                var path = Environment.GetFolderPath(folder);
+                DbPath = System.IO.Path.Join(path, "Apex.catering.db");
+            }
+        }
 
         // DbSet properties tell EF Core which entity types should be part of the model and allow querying/CRUD
         public DbSet<FoodItem> FoodItems { get; set; } // Represents the FoodItems table
@@ -38,8 +46,12 @@ namespace Apex.Catering.Data
         {
             // Calls base implementation (no-op in DbContext but kept for clarity)
             base.OnConfiguring(optionsBuilder);
-            // Configure EF Core to use SQLite with the DbPath file
-            optionsBuilder.UseSqlite($"Data Source={DbPath}");
+
+            // Only configure SQLite here if no configuration was provided via DI.
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlite($"Data Source={DbPath}");
+            }
         }
 
         // OnModelCreating is where model configuration (fluent API) is applied
