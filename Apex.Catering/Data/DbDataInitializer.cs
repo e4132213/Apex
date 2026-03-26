@@ -1,4 +1,9 @@
-﻿namespace Apex.Catering.Data
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+
+namespace Apex.Catering.Data
 {
     public class DbDataInitializer
     {
@@ -11,11 +16,18 @@
 
         public void InitializeData()
         {
-            // Ensure database and schema exist. EnsureCreated returns true when the DB/schema was created.
-            var created = _context.Database.EnsureCreated();
+            // Apply migrations when available; fall back to EnsureCreated for environments without migrations.
+            try
+            {
+                _context.Database.Migrate();
+            }
+            catch (Exception)
+            {
+                _context.Database.EnsureCreated();
+            }
 
-            // If the database already existed, don't re-seed.
-            if (!created)
+            // If data already exists, don't re-seed.
+            if (_context.FoodItems.Any() || _context.Menus.Any() || _context.MenuFoodItems.Any() || _context.FoodBookings.Any())
             {
                 return;
             }
