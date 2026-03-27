@@ -77,12 +77,7 @@ namespace Apex.Catering.Data
                 .HasForeignKey(mf => mf.MenuId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Seed initial data for FoodItem entity
-            builder.Entity<FoodItem>().HasData(
-                new FoodItem { FoodItemId = 1, Description = "Chicken Sandwich", UnitPrice = 5.99m },
-                new FoodItem { FoodItemId = 2, Description = "Veggie Wrap", UnitPrice = 4.99m },
-                new FoodItem { FoodItemId = 3, Description = "Caesar Salad", UnitPrice = 3.99m }
-            );
+            // NOTE: moved seeding to DbDataInitializer to keep a single, deterministic initializer.
         }
     }
 }

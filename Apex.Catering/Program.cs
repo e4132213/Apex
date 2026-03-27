@@ -23,9 +23,12 @@ builder.Services.AddDbContext<CateringDbContext>(options =>
 
 var app = builder.Build();
 
+// Ensure DB/migrations/seed run in all environments (DbDataInitializer already guards duplicate seeding)
+AddData(app);
+
+// Swagger only enabled in Development
 if (app.Environment.IsDevelopment())
 {
-    AddData(app);
     app.UseSwagger();
     app.UseSwaggerUI();
 }

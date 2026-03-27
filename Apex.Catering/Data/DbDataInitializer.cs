@@ -16,7 +16,7 @@ namespace Apex.Catering.Data
 
         public void InitializeData()
         {
-            // Apply migrations when available; fall back to EnsureCreated for environments without migrations.
+            // Prefer migrations; fall back to EnsureCreated when migrations are not available.
             try
             {
                 _context.Database.Migrate();
@@ -26,49 +26,69 @@ namespace Apex.Catering.Data
                 _context.Database.EnsureCreated();
             }
 
-            // If data already exists, don't re-seed.
-            if (_context.FoodItems.Any() || _context.Menus.Any() || _context.MenuFoodItems.Any() || _context.FoodBookings.Any())
+            // Seed FoodItems if missing
+            if (!_context.FoodItems.Any())
             {
-                return;
+                var foodItems = new List<FoodItem>
+                {
+                    new FoodItem { Description = "Chicken Sandwich", UnitPrice = 5.99m },
+                    new FoodItem { Description = "Veggie Wrap", UnitPrice = 4.99m },
+                    new FoodItem { Description = "Caesar Salad", UnitPrice = 6.49m }
+                };
+                _context.FoodItems.AddRange(foodItems);
+                _context.SaveChanges();
             }
 
-            // Seed initial FoodItems
-            var foodItems = new List<FoodItem>
+            // Seed Menus if missing
+            if (!_context.Menus.Any())
             {
-                new FoodItem { FoodItemId = 0,  Description = "Chicken Sandwich", UnitPrice = 5.99m },
-                new FoodItem { FoodItemId = 1,  Description = "Veggie Wrap", UnitPrice = 4.99m },
-                new FoodItem { FoodItemId = 2,  Description = "Caesar Salad", UnitPrice = 6.49m }
-            };
-            _context.FoodItems.AddRange(foodItems);
-            _context.SaveChanges();
+                var menus = new List<Menu>
+                {
+                    new Menu { MenuName = "Standard Menu" },
+                    new Menu { MenuName = "Vegetarian Menu" }
+                };
+                _context.Menus.AddRange(menus);
+                _context.SaveChanges();
+            }
 
-            var menus = new List<Menu>
+            // Seed MenuFoodItems if missing (lookup IDs from DB to avoid ID collisions)
+            if (!_context.MenuFoodItems.Any())
             {
-                new Menu { MenuId = 0, MenuName = "Standard Menu" },
-                new Menu { MenuId = 1, MenuName = "Vegetarian Menu" }
-            };
-            _context.Menus.AddRange(menus);
-            _context.SaveChanges();
+                var chickenId = _context.FoodItems.First(fi => fi.Description == "Chicken Sandwich").FoodItemId;
+                var veggieId = _context.FoodItems.First(fi => fi.Description == "Veggie Wrap").FoodItemId;
+                var caesarId = _context.FoodItems.First(fi => fi.Description == "Caesar Salad").FoodItemId;
 
-            var menuFoodItems = new List<MenuFoodItem>
-            {
-                new MenuFoodItem { MenuId = 0, FoodItemId = 0 },
-                new MenuFoodItem { MenuId = 0, FoodItemId = 1 },
-                new MenuFoodItem { MenuId = 0, FoodItemId = 2 },
-                new MenuFoodItem { MenuId = 1, FoodItemId = 1 },
-                new MenuFoodItem { MenuId = 1, FoodItemId = 2 }
-            };
-            _context.MenuFoodItems.AddRange(menuFoodItems);
-            _context.SaveChanges();
+                var standardMenuId = _context.Menus.First(m => m.MenuName == "Standard Menu").MenuId;
+                var vegetarianMenuId = _context.Menus.First(m => m.MenuName == "Vegetarian Menu").MenuId;
 
-            var bookings = new List<FoodBooking>
+                var menuFoodItems = new List<MenuFoodItem>
+                {
+                    new MenuFoodItem { MenuId = standardMenuId, FoodItemId = chickenId },
+                    new MenuFoodItem { MenuId = standardMenuId, FoodItemId = veggieId },
+                    new MenuFoodItem { MenuId = standardMenuId, FoodItemId = caesarId },
+                    new MenuFoodItem { MenuId = vegetarianMenuId, FoodItemId = veggieId },
+                    new MenuFoodItem { MenuId = vegetarianMenuId, FoodItemId = caesarId }
+                };
+
+                _context.MenuFoodItems.AddRange(menuFoodItems);
+                _context.SaveChanges();
+            }
+
+            // Seed FoodBookings if missing
+            if (!_context.FoodBookings.Any())
             {
-                new FoodBooking { FoodBookingId = 0, MenuId = 0, NumberOfGuests = 10 },
-                new FoodBooking { FoodBookingId = 1, MenuId = 1, NumberOfGuests = 5 }
-            };
-            _context.FoodBookings.AddRange(bookings);
-            _context.SaveChanges();
+                var standardMenuId = _context.Menus.First(m => m.MenuName == "Standard Menu").MenuId;
+                var vegetarianMenuId = _context.Menus.First(m => m.MenuName == "Vegetarian Menu").MenuId;
+
+                var bookings = new List<FoodBooking>
+                {
+                    new FoodBooking { MenuId = standardMenuId, NumberOfGuests = 10, ClientReferenceId = 0 },
+                    new FoodBooking { MenuId = vegetarianMenuId, NumberOfGuests = 5, ClientReferenceId = 0 }
+                };
+
+                _context.FoodBookings.AddRange(bookings);
+                _context.SaveChanges();
+            }
         }
-
     }
 }
