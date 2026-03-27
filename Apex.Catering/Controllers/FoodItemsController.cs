@@ -46,16 +46,34 @@ namespace Apex.Catering.Controllers
         }
 
         // PUT: api/FoodItems/5
+        // Upsert behavior: update if exists, create if not.
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Put(int id, [FromBody] FoodItem model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            if (id != model.FoodItemId && model.FoodItemId != 0) return BadRequest("Id mismatch.");
+            if (model.FoodItemId != 0 && model.FoodItemId != id) return BadRequest("Id mismatch.");
 
             var existing = await _context.FoodItems.FindAsync(id);
-            if (existing is null) return NotFound();
 
-            // Update allowed fields
+            // Not found -> create new with provided id (upsert)
+            if (existing is null)
+            {
+                var entity = new FoodItem
+                {
+                    FoodItemId = id,
+                    Description = model.Description,
+                    UnitPrice = model.UnitPrice
+                };
+
+                // Note: SQLite AUTOINCREMENT will still work if you use POST.
+                // Using PUT to insert with an explicit id can be done but may conflict if id already exists.
+                _context.FoodItems.Add(entity);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(Get), new { id = entity.FoodItemId }, entity);
+            }
+
+            // Exists -> update allowed fields
             existing.Description = model.Description;
             existing.UnitPrice = model.UnitPrice;
 
