@@ -89,7 +89,8 @@ namespace Apex.Catering.Controllers
         }
 
         // PUT: api/FoodBookings/5
-        // Edit an existing booking. Accepts a simple DTO (no nested Menu).
+        // Upsert behavior: if the booking exists update it; if it does not exist create it.
+        // Accepts a simple DTO (no nested Menu).
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Put(int id, [FromBody] FoodBookingDto model)
         {
@@ -97,9 +98,31 @@ namespace Apex.Catering.Controllers
             if (model.FoodBookingId != 0 && model.FoodBookingId != id) return BadRequest("Id mismatch.");
 
             var existing = await _context.FoodBookings.FindAsync(id);
-            if (existing is null) return NotFound();
 
-            // Validate referenced Menu exists if changed
+            // If not found -> create new booking with the provided id (upsert)
+            if (existing is null)
+            {
+                // Validate referenced Menu exists
+                var menuExists = await _context.Menus.AnyAsync(m => m.MenuId == model.MenuId);
+                if (!menuExists) return BadRequest($"Menu with id {model.MenuId} does not exist.");
+
+                var entity = new FoodBooking
+                {
+                    FoodBookingId = id,
+                    ClientReferenceId = model.ClientReferenceId,
+                    NumberOfGuests = model.NumberOfGuests,
+                    MenuId = model.MenuId
+                };
+
+                // Ensure EF will insert with the specified key for SQLite/autoincrement:
+                // If you rely on autoincrement always use POST; this upsert forces the provided id.
+                _context.FoodBookings.Add(entity);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(Get), new { id = entity.FoodBookingId }, new { FoodBookingId = entity.FoodBookingId });
+            }
+
+            // Exists -> perform update
             if (existing.MenuId != model.MenuId)
             {
                 var menuExists = await _context.Menus.AnyAsync(m => m.MenuId == model.MenuId);
