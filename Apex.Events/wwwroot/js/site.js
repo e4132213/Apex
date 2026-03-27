@@ -147,6 +147,135 @@
     container.appendChild(table);
   }
 
+  // --- Helpers to populate menu selects and booking edit form ------------
+  async function populateMenuSelect(selector = '.menu-select', includePlaceholder = true, selectedId = null) {
+    const nodes = document.querySelectorAll(selector);
+    if (!nodes || nodes.length === 0) return;
+    let menus;
+    try {
+      menus = await Api.getMenus();
+    } catch (err) {
+      console.error(err);
+      showAlert('Failed to load menus: ' + (err.message ?? err), 'danger');
+      return;
+    }
+    nodes.forEach(el => {
+      if (el.tagName !== 'SELECT') return;
+      el.innerHTML = '';
+      if (includePlaceholder) {
+        const ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = '-- Select menu --';
+        ph.disabled = true;
+        ph.selected = !selectedId;
+        el.appendChild(ph);
+      }
+      menus.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.MenuId;
+        opt.textContent = m.MenuName;
+        if (selectedId && m.MenuId === selectedId) opt.selected = true;
+        el.appendChild(opt);
+      });
+    });
+  }
+
+  async function populateBookingSelect(selector = '#bookingSelect') {
+    const node = document.querySelector(selector);
+    if (!node) return;
+    let bookings;
+    try {
+      bookings = await Api.getFoodBookings();
+    } catch (err) {
+      console.error(err);
+      showAlert('Failed to load bookings: ' + (err.message ?? err), 'danger');
+      return;
+    }
+
+    node.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = '-- Select booking to edit --';
+    ph.disabled = true;
+    ph.selected = true;
+    node.appendChild(ph);
+
+    bookings.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.FoodBookingId;
+      const menuName = (b.Menus && b.Menus.MenuName) ? b.Menus.MenuName : `Menu ${b.MenuId}`;
+      opt.textContent = `#${b.FoodBookingId} — ${menuName} (${b.NumberOfGuests} guests)`;
+      node.appendChild(opt);
+    });
+
+    node.addEventListener('change', () => {
+      const id = parseInt(node.value);
+      if (!isNaN(id)) loadBookingIntoForm(id);
+    });
+  }
+
+  async function loadBookingIntoForm(bookingId, formSelector = '#editBookingForm') {
+    const form = document.querySelector(formSelector);
+    if (!form) return;
+    try {
+      const booking = await Api.getFoodBooking(bookingId);
+      // ensure menus are loaded first
+      await populateMenuSelect('.menu-select', true, booking.MenuId);
+
+      const idInput = form.querySelector('input[name="FoodBookingId"]');
+      if (idInput) idInput.value = booking.FoodBookingId ?? '';
+
+      const menuSelect = form.querySelector('select[name="MenuId"]');
+      if (menuSelect) {
+        // set selected value (string compare)
+        menuSelect.value = booking.MenuId?.toString() ?? '';
+      }
+
+      const guestsInput = form.querySelector('input[name="NumberOfGuests"]');
+      if (guestsInput) guestsInput.value = booking.NumberOfGuests ?? 1;
+
+      const clientRef = form.querySelector('input[name="ClientReferenceId"]');
+      if (clientRef) clientRef.value = booking.ClientReferenceId ?? 0;
+    } catch (err) {
+      console.error(err);
+      showAlert('Failed to load booking: ' + (err.message ?? err), 'danger');
+    }
+  }
+
+  async function handleEditFoodBookingForm(formSelector = '#editBookingForm') {
+    const form = document.querySelector(formSelector);
+    if (!form) return;
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const formData = new FormData(form);
+      const id = parseInt(formData.get('FoodBookingId')) || 0;
+      if (!id) {
+        showAlert('Select a booking to edit first.', 'warning');
+        return;
+      }
+
+      const payload = {
+        FoodBookingId: id,
+        MenuId: parseInt(formData.get('MenuId')) || 0,
+        NumberOfGuests: parseInt(formData.get('NumberOfGuests')) || 0,
+        ClientReferenceId: parseInt(formData.get('ClientReferenceId') ?? '0') || 0
+      };
+
+      try {
+        await Api.updateFoodBooking(id, payload);
+        showAlert('Booking updated successfully.', 'success');
+        // refresh booking select text to reflect change
+        await populateBookingSelect('#bookingSelect');
+        // refresh any bookings table
+        if (typeof loadFoodBookingsTable === 'function') loadFoodBookingsTable();
+      } catch (err) {
+        console.error(err);
+        showAlert('Failed to update booking: ' + (err.message ?? err), 'danger');
+      }
+    });
+  }
+
   // --- Page-oriented helpers (auto-run if containers exist) --------------
   async function loadFoodBookingsTable(selector = '#foodBookingsTable') {
     const el = document.querySelector(selector);
@@ -184,6 +313,14 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadFoodBookingsTable();
     loadFoodItemsTable();
+
+    // If an edit form exists on the page, wire it up so user only needs to pick from dropdowns.
+    if (document.querySelector('#editBookingForm')) {
+      populateMenuSelect('.menu-select');
+      populateBookingSelect('#bookingSelect');
+      handleEditFoodBookingForm('#editBookingForm');
+    }
+
     // Add more auto-loaders as you create pages (e.g. menus, menuFoodItems, event types etc.)
   });
 
@@ -194,6 +331,10 @@
     renderTable,
     loadFoodBookingsTable,
     loadFoodItemsTable,
+    populateMenuSelect,
+    populateBookingSelect,
+    loadBookingIntoForm,
+    handleEditFoodBookingForm,
     configure: (opts) => Object.assign(config, opts)
   };
 })();

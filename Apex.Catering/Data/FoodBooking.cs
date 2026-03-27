@@ -16,12 +16,13 @@ namespace Apex.Catering.Data
         public int ClientReferenceId { get; set; }
 
         // Number of guests included in the booking. 
-        // [Range(1, 10000) forces the program to recognise that at least their must be at least 1 guest.
         [Range(1, 10000)]
         public int NumberOfGuests { get; set; }
 
         // Identifier of the selected menu for this booking.
         public int MenuId { get; set; }
-        public Menu Menus { get; set; } = null!;
+
+        // Make navigation optional so the PUT schema does NOT require full menu details.
+        public Menu? Menus { get; set; }
     }
 }

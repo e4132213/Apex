@@ -1,0 +1,42 @@
+@page
+@model Apex.Events.Pages.Catering.EditFoodBookingModel
+@{
+  ViewData["Title"] = "Edit Food Booking";
+}
+
+<h2>Edit Food Booking</h2>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="editBookingForm" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="bookingSelect" class="form-label">Booking</label>
+        <select id="bookingSelect" class="form-select" aria-label="Select booking to edit">
+          <!-- populated by site.js populateBookingSelect -->
+        </select>
+      </div>
+
+      <input type="hidden" name="FoodBookingId" value="" />
+
+      <div class="mb-3">
+        <label for="menuSelect" class="form-label">Menu</label>
+        <select id="menuSelect" name="MenuId" class="form-select menu-select" required>
+          <!-- populated by site.js populateMenuSelect -->
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="guests" class="form-label">Number of Guests</label>
+        <input id="guests" name="NumberOfGuests" type="number" min="1" value="1" class="form-control" required />
+      </div>
+
+      <input type="hidden" name="ClientReferenceId" value="0" />
+
+      <button class="btn btn-primary" type="submit">Update Booking</button>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+  <script src="~/js/site.js"></script>
+}

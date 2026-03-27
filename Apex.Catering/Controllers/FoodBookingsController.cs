@@ -66,31 +66,35 @@ namespace Apex.Catering.Controllers
         // POST: api/FoodBookings
         // Creates a new booking and returns the FoodBookingId as confirmation (201 Created).
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] FoodBooking model)
+        public async Task<ActionResult> Post([FromBody] FoodBookingDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            // Ensure identity is not supplied by client.
-            model.FoodBookingId = 0;
 
             // Validate referenced Menu exists
             var menuExists = await _context.Menus.AnyAsync(m => m.MenuId == model.MenuId);
             if (!menuExists) return BadRequest($"Menu with id {model.MenuId} does not exist.");
 
-            _context.FoodBookings.Add(model);
+            var entity = new FoodBooking
+            {
+                ClientReferenceId = model.ClientReferenceId,
+                NumberOfGuests = model.NumberOfGuests,
+                MenuId = model.MenuId
+            };
+
+            _context.FoodBookings.Add(entity);
             await _context.SaveChangesAsync();
 
             // Return created with the new id in the response body.
-            return CreatedAtAction(nameof(Get), new { id = model.FoodBookingId }, new { FoodBookingId = model.FoodBookingId });
+            return CreatedAtAction(nameof(Get), new { id = entity.FoodBookingId }, new { FoodBookingId = entity.FoodBookingId });
         }
 
         // PUT: api/FoodBookings/5
-        // Edit an existing booking. Idempotent update of allowed fields.
+        // Edit an existing booking. Accepts a simple DTO (no nested Menu).
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Put(int id, [FromBody] FoodBooking model)
+        public async Task<IActionResult> Put(int id, [FromBody] FoodBookingDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            if (id != model.FoodBookingId && model.FoodBookingId != 0) return BadRequest("Id mismatch.");
+            if (model.FoodBookingId != 0 && model.FoodBookingId != id) return BadRequest("Id mismatch.");
 
             var existing = await _context.FoodBookings.FindAsync(id);
             if (existing is null) return NotFound();
