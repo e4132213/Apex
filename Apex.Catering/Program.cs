@@ -75,6 +75,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Diagnostic: list mapped endpoints so you can confirm exact routes
+// Hidden from Swagger/OpenAPI by ExcludeFromDescription()
 app.MapGet("/__endpoints", (EndpointDataSource ds) =>
 {
     var routes = ds.Endpoints
@@ -82,7 +83,7 @@ app.MapGet("/__endpoints", (EndpointDataSource ds) =>
         .Select(e => new { Pattern = e.RoutePattern.RawText, Name = e.DisplayName })
         .OrderBy(r => r.Pattern);
     return Results.Json(routes);
-});
+}).ExcludeFromDescription();
 
 // Diagnostic: DB status (row counts)
 app.MapGet("/__db/status", (IServiceProvider sp) =>
@@ -103,7 +104,7 @@ app.MapGet("/__db/status", (IServiceProvider sp) =>
     {
         return Results.Problem(detail: ex.Message, statusCode: 500);
     }
-});
+}).ExcludeFromDescription();
 
 // Diagnostic: small sample (projected to avoid cycles)
 app.MapGet("/__db/sample", (IServiceProvider sp) =>
@@ -138,7 +139,7 @@ app.MapGet("/__db/sample", (IServiceProvider sp) =>
     {
         return Results.Problem(detail: ex.Message, statusCode: 500);
     }
-});
+}).ExcludeFromDescription();
 
 app.Run();
 
