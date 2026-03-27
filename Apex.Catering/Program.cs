@@ -21,7 +21,18 @@ var connectionString = $"Data Source={dbPath}";
 builder.Services.AddDbContext<CateringDbContext>(options =>
     options.UseSqlite(connectionString));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalDev", p =>
+        p.WithOrigins("https://localhost:5001") // replace with your Events app origin
+         .AllowAnyHeader()
+         .AllowAnyMethod()
+         .AllowCredentials());
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowLocalDev");
 
 // Ensure DB/migrations/seed run in all environments (DbDataInitializer already guards duplicate seeding)
 AddData(app);
